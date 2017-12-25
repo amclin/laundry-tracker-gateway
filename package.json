@@ -1,0 +1,14 @@
+{
+  "name": "laundry-gateway",
+  "version": "0.0.1",
+  "description": "API gateway for laundry detection service for relaying from sensors to cloud.",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "author": "Anthony McLin",
+  "license": "MIT",
+  "devDependencies": {
+    "standard": "^10.0.3"
+  }
+}
