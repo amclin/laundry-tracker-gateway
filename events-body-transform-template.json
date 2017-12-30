@@ -1,0 +1,77 @@
+## API Gateway mapping for DynamoDB PutItem
+#set($inputRoot = $input.path('$'))
+{
+  "TableName": "location_status",
+  "Item": {
+    "location": {
+      "S": "$inputRoot.location"
+    },
+    "event_id": {
+      "S": "$context.requestId"
+    },
+    "timestamp": {
+      "S": "$inputRoot.timestamp"
+    },
+    "states": {
+      "L": [
+      #foreach($elem in $inputRoot.states)
+        {
+          "M": {
+            "machine" : {
+              "S": "$elem.machine"
+            },
+            "pin": {
+              "N": "$elem.pin"
+            },
+            "state": {
+              "BOOL": $elem.state
+            }
+          }
+        }
+        #if($foreach.hasNext),#end
+      #end
+      ]
+    }
+  }
+}
+
+
+
+
+
+
+#set($inputRoot = $input.path('$'))
+{
+  "RequestItems": {
+    "events": [
+      #foreach($elem in $inputRoot.states)
+      {
+        "PutRequest": {
+          "Item": {
+            "event_id": {
+                "S": "$context.requestId+$elem.machine"
+            },
+            "time": {
+              "S": "$context.requestTime"
+            },
+            "location" : {
+              "S": "$inputRoot.location"
+            },
+            "machine" : {
+              "S": "$elem.machine"
+            },
+            "pin": {
+              "N": "$elem.pin"
+            },
+            "state": {
+              "BOOL": $elem.state
+            }
+          }
+        }
+      }
+      #if($foreach.hasNext),#end
+      #end
+    ]
+  },
+  "ReturnConsumedCapacity": "TOTAL"
+}

@@ -1,0 +1,9 @@
+## API Gateway mapping for DynamoDB GetItem
+{
+    "TableName": "location_status",
+    "Key": {
+        "location": {
+            "S": "$input.params('locationId')"
+        }
+    }
+}

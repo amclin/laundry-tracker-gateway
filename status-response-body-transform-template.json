@@ -1,0 +1,13 @@
+## API Gateway mapping for DynamoDB GetItem response
+#set($inputRoot = $input.path('$'))
+#set($item = $inputRoot.Item)
+{
+    "timestamp": "$item.timestamp.S",
+    "machines": [
+        #foreach($machine in $item.states.L) {
+            "id": "$machine.M.machine.S",
+            "state": $machine.M.state.BOOL
+        }#if($foreach.hasNext),#end
+        #end
+    ]
+}
