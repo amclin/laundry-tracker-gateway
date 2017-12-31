@@ -1,6 +1,7 @@
 const config = require('./config.json')
 const webPush = require('web-push')
 const AWS = require('aws-sdk')
+const deepEqual = require('deep-equal')
 const dynamodb = new AWS.DynamoDB()
 var registrations = []
 
@@ -31,7 +32,8 @@ function sendNotification (subscription) {
   ).then(function () {
     console.log('Push Application Server - Notification sent to ' + subscription.endpoint)
   }).catch(function (error) {
-    console.log('ERROR in sending Notification, endpoint removed ' + subscription.endpoint)
+    console.log('ERROR in sending Notification: ', error)
+    console.log('Removing failed subscription: ', subscription.endpoint)
     unregisterSubscription(subscription.endpoint)
   })
 }
@@ -107,8 +109,16 @@ function processRegistrations () {
 /**
  * Extract the location ID from a stream event object
  **/
-function getLocationFromEvent(event) {
+function getLocationFromEvent (event) {
   return event.Records[0].dynamodb.Keys.location.S
+}
+
+function getNewRecord (event) {
+  return event.Records[0].dynamodb.NewImage
+}
+
+function getOldRecord (event) {
+  return event.Records[0].dynamodb.OldImage
 }
 
 // Consolidated entrypoint
@@ -118,6 +128,12 @@ function start (locationid) {
 
 // AWS Lamda entry point
 exports.pushNotification = function (event, context, callback) {
+  // Don't do anything unless there was a change
+  if (deepEqual(getNewRecord(event).states, getOldRecord(event).states)) {
+    console.log('No change. Skipping.')
+    return
+  }
+
   // Map the triggering locationid
   var locationid = getLocationFromEvent(event)
   start(locationid)

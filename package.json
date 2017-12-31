@@ -9,6 +9,7 @@
   "author": "Anthony McLin",
   "license": "MIT",
   "dependencies": {
+    "deep-equal": "^1.0.1",
     "web-push": "^3.2.5"
   },
   "files": [
