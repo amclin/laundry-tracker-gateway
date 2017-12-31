@@ -1,0 +1,9 @@
+## API Gateway mapping for DynamoDB DeleteItem Subscription Notifications
+{
+  "TableName": "laundry_notification_subscriptions",
+  "Key": {
+    "endpoint": {
+      "S": "$util.urlDecode($input.params('subscriptionId'))"
+    }
+  }
+}
