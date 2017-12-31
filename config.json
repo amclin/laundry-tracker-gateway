@@ -1,5 +1,6 @@
 {
 	"privatekey": "OUCkDHy7GqYY2YbGs_z0K10rMloV75ZpS__QfBZxx2k",
 	"publickey": "BBUqRw8CqtCgLZ9ve8xPAesZZUdpdWUW775r4RHFPOkeZQj5pyGj1G2EbP3hE4wylQyOCb7wOIhMzRNth3MNchQ",
-	"email": "example@example.com"
+	"email": "example@example.com",
+	"message": "A laundry machine has changed"
 }
