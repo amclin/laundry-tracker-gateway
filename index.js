@@ -104,6 +104,13 @@ function processRegistrations () {
   })
 }
 
+/**
+ * Extract the location ID from a stream event object
+ **/
+function getLocationFromEvent(event) {
+  return event.Records[0].dynamodb.Keys.location.S
+}
+
 // Consolidated entrypoint
 function start (locationid) {
   getRegistrations(locationid, processRegistrations)
@@ -112,7 +119,7 @@ function start (locationid) {
 // AWS Lamda entry point
 exports.pushNotification = function (event, context, callback) {
   // Map the triggering locationid
-  var locationid = event.locationid
+  var locationid = getLocationFromEvent(event)
   start(locationid)
 }
 
