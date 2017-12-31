@@ -4,11 +4,14 @@
   "description": "API gateway for laundry detection service for relaying from sensors to cloud.",
   "main": "index.js",
   "scripts": {
-    "test": "test"
+    "test": "standard"
   },
   "author": "Anthony McLin",
   "license": "MIT",
   "devDependencies": {
     "standard": "^10.0.3"
+  },
+  "dependencies": {
+    "web-push": "^3.2.5"
   }
 }
