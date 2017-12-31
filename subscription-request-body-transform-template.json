@@ -15,6 +15,9 @@
           "S": "$inputRoot.keys.p256dh"
         }
       }
+    },
+    "locationid": {
+      "S": "$inputRoot.locationid"
     }
   }
 }

@@ -14,5 +14,9 @@
   },
   "dependencies": {
     "web-push": "^3.2.5"
-  }
+  },
+  "files": [
+    "index.js",
+    "config.json"
+  ]
 }
