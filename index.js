@@ -4,6 +4,7 @@ const AWS = require('aws-sdk')
 const deepEqual = require('deep-equal')
 const dynamodb = new AWS.DynamoDB()
 var registrations = []
+var EVENT = {}
 
 webPush.setVapidDetails(
   'mailto:' + config.email,
@@ -24,7 +25,11 @@ function sendNotification (subscription) {
   //   }
   // }
 
-  const payload = config.message
+  const payload = JSON.stringify({
+    machines: getChangedMachines(EVENT)
+  })
+
+  console.log('Payload will be:', payload)
 
   webPush.sendNotification(
     pushSubscription,
@@ -36,6 +41,39 @@ function sendNotification (subscription) {
     console.log('Removing failed subscription: ', subscription.endpoint)
     unregisterSubscription(subscription.endpoint)
   })
+}
+
+/**
+ * Parses the event to determine which machines changed state
+ *
+ * @param event Event data provided from DynamoDB
+ * @return array List of changed machines with their current state
+ **/
+function getChangedMachines(event) {
+  const current = event.Records[0].dynamodb.NewImage.states.L
+  const old = event.Records[0].dynamodb.OldImage.states.L
+  var machines = []
+
+  // Loop through the current machine states and find any
+  // that differ from the previous state for the same machine ID
+  current.forEach(function(machine) {
+    const id = machine.M.machine.S
+    const newState = machine.M.state.BOOL
+    const oldState = old.find(function(el) {
+      return el.M.machine.S === id
+    }).M.state.BOOL
+
+    console.log('New/old state is',newState,oldState)
+
+    if (newState !== oldState) {
+      machines.push({
+        id: id,
+        state: newState
+      })
+    }
+  })
+
+  return machines
 }
 
 /**
@@ -106,40 +144,20 @@ function processRegistrations () {
   })
 }
 
-/**
- * Extract the location ID from a stream event object
- **/
-function getLocationFromEvent (event) {
-  return event.Records[0].dynamodb.Keys.location.S
-}
-
-function getNewRecord (event) {
-  return event.Records[0].dynamodb.NewImage
-}
-
-function getOldRecord (event) {
-  return event.Records[0].dynamodb.OldImage
-}
-
-// Consolidated entrypoint
-function start (locationid) {
-  getRegistrations(locationid, processRegistrations)
-}
-
 // AWS Lamda entry point
 exports.pushNotification = function (event, context, callback) {
+  const newRecord = event.Records[0].dynamodb.NewImage
+  const oldRecord = event.Records[0].dynamodb.OldImage
+  const location = event.Records[0].dynamodb.Keys.location.S
+
   // Don't do anything unless there was a change
-  if (deepEqual(getNewRecord(event).states, getOldRecord(event).states)) {
-    console.log('No change. Skipping.')
+  if (deepEqual(newRecord.states, oldRecord.states)) {
+    console.log('Exiting, no change to machine states in %s', location)
     return
   }
 
-  // Map the triggering locationid
-  var locationid = getLocationFromEvent(event)
-  start(locationid)
-}
+  EVENT = event
 
-// Entry point for local Node.js
-if (require.main === module) {
-  start()
+  // Run the notifications
+  getRegistrations(location, processRegistrations)
 }
