@@ -15,9 +15,8 @@ webPush.setVapidDetails(
 /**
  * Sends a push notification to a specified endpoint
  **/
-function sendNotification (subscription) {
-  const pushSubscription = subscription
-  // const pushSubscription = {
+function sendNotification (subscription, payload) {
+  // const subscription = {
   // endpoint: '< Push Subscription URL >',
   //   keys: {
   //     p256dh: '< User Public Encryption Key >',
@@ -25,20 +24,15 @@ function sendNotification (subscription) {
   //   }
   // }
 
-  const payload = JSON.stringify({
-    machines: getChangedMachines(EVENT)
-  })
-
-  console.log('Payload will be:', payload)
-
   webPush.sendNotification(
-    pushSubscription,
+    subscription,
     payload
   ).then(function () {
     console.log('Push Application Server - Notification sent to ' + subscription.endpoint)
   }).catch(function (error) {
-    console.log('ERROR in sending Notification: ', error)
-    console.log('Removing failed subscription: ', subscription.endpoint)
+    if (error) {
+      console.log('ERROR in sending Notification: ', subscription.endpoint)
+    }
     unregisterSubscription(subscription.endpoint)
   })
 }
@@ -49,21 +43,19 @@ function sendNotification (subscription) {
  * @param event Event data provided from DynamoDB
  * @return array List of changed machines with their current state
  **/
-function getChangedMachines(event) {
+function getChangedMachines (event) {
   const current = event.Records[0].dynamodb.NewImage.states.L
   const old = event.Records[0].dynamodb.OldImage.states.L
   var machines = []
 
   // Loop through the current machine states and find any
   // that differ from the previous state for the same machine ID
-  current.forEach(function(machine) {
+  current.forEach(function (machine) {
     const id = machine.M.machine.S
     const newState = machine.M.state.BOOL
-    const oldState = old.find(function(el) {
+    const oldState = old.find(function (el) {
       return el.M.machine.S === id
     }).M.state.BOOL
-
-    console.log('New/old state is',newState,oldState)
 
     if (newState !== oldState) {
       machines.push({
@@ -80,7 +72,22 @@ function getChangedMachines(event) {
  * Remove a subscription registration from the server
  **/
 function unregisterSubscription (endpoint) {
-  // TODO: add call to remove registration from dynamo
+  console.log('Removing subscription: ', endpoint)
+  var params = {
+    'TableName': 'laundry_notification_subscriptions',
+    'Key': {
+      'endpoint': {
+        'S': endpoint
+      }
+    }
+  }
+
+  dynamodb.deleteItem(params, function (err, data) {
+    if (err) {
+      console.log('Unable to delete. Error:', JSON.stringify(err, null, 2))
+      throw new Error('Unable to delete from DynamoDB')
+    }
+  })
 }
 
 /**
@@ -139,8 +146,12 @@ function recordToJSON (record) {
  **/
 function processRegistrations () {
   console.log('Processing %s registrations.', registrations.length)
+  const payload = JSON.stringify({
+    machines: getChangedMachines(EVENT)
+  })
+  
   registrations.forEach(function (subscription) {
-    sendNotification(subscription)
+    sendNotification(subscription, payload)
   })
 }
 
