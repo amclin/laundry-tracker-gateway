@@ -2,7 +2,7 @@ const config = require('./config.json')
 const webPush = require('web-push')
 const AWS = require('aws-sdk')
 const deepEqual = require('deep-equal')
-const dynamodb = new AWS.DynamoDB()
+const dynamodb = new AWS.DynamoDB.DocumentClient()
 var registrations = []
 var EVENT = {}
 
@@ -76,13 +76,11 @@ function unregisterSubscription (endpoint) {
   var params = {
     'TableName': 'laundry_notification_subscriptions',
     'Key': {
-      'endpoint': {
-        'S': endpoint
-      }
+      'endpoint': endpoint
     }
   }
 
-  dynamodb.deleteItem(params, function (err, data) {
+  dynamodb.delete(params, function (err, data) {
     if (err) {
       console.log('Unable to delete. Error:', JSON.stringify(err, null, 2))
       throw new Error('Unable to delete from DynamoDB')
@@ -104,9 +102,7 @@ function getRegistrations (locationid, callback) {
       '#keys': 'keys'
     },
     ExpressionAttributeValues: {
-      ':lid': {
-        'S': locationid
-      }
+      ':lid': locationid
     }
   }
 
@@ -118,27 +114,11 @@ function getRegistrations (locationid, callback) {
 
     console.log('Found %s registered subscriptions for location %s', data.Items.length, locationid)
 
-    // Convert from DynamoDB syntax into usable objects
-    registrations = data.Items.map(recordToJSON)
+    registrations = data.Items
 
     // Issue the callback to handle the results
     if (typeof callback === 'function') { callback() }
   })
-}
-
-/**
- * Converts a DynamoDB record of specific format into JSON
- **/
-function recordToJSON (record) {
-  var result = {
-    endpoint: record.endpoint.S,
-    keys: {
-      auth: record.keys.M.auth.S,
-      p256dh: record.keys.M.p256dh.S
-    }
-  }
-
-  return result
 }
 
 /**
@@ -149,7 +129,7 @@ function processRegistrations () {
   const payload = JSON.stringify({
     machines: getChangedMachines(EVENT)
   })
-  
+
   registrations.forEach(function (subscription) {
     sendNotification(subscription, payload)
   })
