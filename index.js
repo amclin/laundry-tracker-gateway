@@ -130,6 +130,8 @@ function processRegistrations () {
     machines: getChangedMachines(EVENT)
   })
 
+  console.log('Payload is:', JSON.stringify(payload));
+
   registrations.forEach(function (subscription) {
     sendNotification(subscription, payload)
   })
