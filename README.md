@@ -1,5 +1,7 @@
 # laundry-tracker-gateway
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/amclin/laundry-tracker-gateway.svg)](https://greenkeeper.io/)
+
 This repository contains the configurations for an AWS API Gateway and various Lamda services for a prototype project that provides the ability to track the status of multiple laundry machines in a laundromat, and provide users status updates through a web portal and progressive web app.
 
 ## Related Repos
